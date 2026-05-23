@@ -1,0 +1,914 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Postos API",
+        "description": "API de gestão de postos (PinPoint): JWT, RBAC, stock e histórico de ajustes.",
+        "contact": {
+            "email": "suporte@postosapi.local"
+        },
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "/api",
+            "description": "Prefixo das rotas API"
+        }
+    ],
+    "paths": {
+        "/me": {
+            "get": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Utilizador sincronizado + claims JWT",
+                "description": "O utilizador local é criado/atualizado automaticamente a partir do JWT do serviço de auth externo.",
+                "operationId": "e8755963d15e3bf7846e3e609298c47d",
+                "responses": {
+                    "200": {
+                        "description": "Perfil local e payload JWT"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/posts": {
+            "get": {
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "Listar posts",
+                "description": "Admin vê todos os postos. Gestor com post_id vê apenas o seu posto.",
+                "operationId": "5f292ed47bdbfa79356750be0807450c",
+                "responses": {
+                    "200": {
+                        "description": "Lista de posts",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Post"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "Criar posto (admin)",
+                "operationId": "c2e0b0e26215e6d34ece33ebae25f7df",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StorePostRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Posto criado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Post"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "403": {
+                        "description": "Apenas admin"
+                    },
+                    "422": {
+                        "description": "Validação falhou"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/posts/{post}": {
+            "get": {
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "Detalhes de um posto",
+                "operationId": "19d7b55d7d5efd7bc27ed7c01d74ca95",
+                "parameters": [
+                    {
+                        "name": "post",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Posto",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Post"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "404": {
+                        "description": "Posto não encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "Atualizar posto (admin)",
+                "operationId": "97ae61bfc5c99543e90d6f4136332c12",
+                "parameters": [
+                    {
+                        "name": "post",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StorePostRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Posto atualizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Post"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "403": {
+                        "description": "Apenas admin"
+                    },
+                    "404": {
+                        "description": "Posto não encontrado"
+                    },
+                    "422": {
+                        "description": "Validação falhou"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "Eliminar posto (admin)",
+                "operationId": "f5991cc3c6e9a5fcb5b97135fbe27b0c",
+                "parameters": [
+                    {
+                        "name": "post",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Posto eliminado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MessageResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "403": {
+                        "description": "Apenas admin"
+                    },
+                    "404": {
+                        "description": "Posto não encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/roles": {
+            "get": {
+                "tags": [
+                    "Roles"
+                ],
+                "summary": "Listar papéis",
+                "operationId": "6e28bdec08d7292bde33180ca5928718",
+                "responses": {
+                    "200": {
+                        "description": "Lista de papéis",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Role"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/roles/{role}": {
+            "get": {
+                "tags": [
+                    "Roles"
+                ],
+                "summary": "Detalhes de um papel",
+                "operationId": "1b4883de64e44956da4d60921370611c",
+                "parameters": [
+                    {
+                        "name": "role",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Papel",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Role"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "404": {
+                        "description": "Papel não encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/posts/{post}/products/{product}/stock": {
+            "patch": {
+                "tags": [
+                    "Stock"
+                ],
+                "summary": "Atualizar stock de um produto no posto (gestor)",
+                "description": "O gestor só pode atualizar stock do posto ao qual está vinculado (user.post_id === post.id).",
+                "operationId": "4d17443126e49193e050ad8b066af699",
+                "parameters": [
+                    {
+                        "name": "post",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateStockRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Stock atualizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StockUpdateResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "403": {
+                        "description": "Sem permissão",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validação falhou"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/posts/{post}/stock_histories": {
+            "get": {
+                "tags": [
+                    "StockHistory"
+                ],
+                "summary": "Histórico de stock de um posto",
+                "operationId": "db75327e339e1f7e30ee5b7f0b1e0977",
+                "parameters": [
+                    {
+                        "name": "post",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de registos de histórico",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/StockHistory"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Sem permissão",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/posts/{post}/products/{product}/stock_histories": {
+            "get": {
+                "tags": [
+                    "StockHistory"
+                ],
+                "summary": "Histórico de stock de um produto num posto",
+                "operationId": "056548a9e5a6e3004644b7a062562f56",
+                "parameters": [
+                    {
+                        "name": "post",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de registos de histórico",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/StockHistory"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Sem permissão",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/products/{product}/stock_histories": {
+            "get": {
+                "tags": [
+                    "StockHistory"
+                ],
+                "summary": "Histórico de stock de um produto",
+                "description": "Admin vê todos os postos. Gestor vê apenas o seu posto.",
+                "operationId": "1d49617112a2d7c41548ac8b062150bb",
+                "parameters": [
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de registos de histórico",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/StockHistory"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Sem permissão",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/users/{user}": {
+            "patch": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Associar utilizador a posto e/ou papel (admin)",
+                "description": "O parâmetro {user} aceita o id local ou o auth_user_id (sub do JWT externo).",
+                "operationId": "a19bd7413ea8c31a575987f164c35939",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "description": "Id local ou auth_user_id (sub do serviço de auth)",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "post_id": {
+                                        "type": "integer",
+                                        "example": 1,
+                                        "nullable": true
+                                    },
+                                    "role_id": {
+                                        "type": "integer",
+                                        "example": 3,
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Utilizador atualizado"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "403": {
+                        "description": "Apenas admin"
+                    },
+                    "404": {
+                        "description": "Utilizador não encontrado"
+                    },
+                    "422": {
+                        "description": "Validação falhou"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Post": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Posto Central"
+                    },
+                    "address": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "latitude": {
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "longitude": {
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "admin_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "Role": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "gestor"
+                    },
+                    "permissions": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "Stock": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 10
+                    },
+                    "post_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "product_id": {
+                        "type": "integer",
+                        "example": 42
+                    },
+                    "quantity": {
+                        "type": "number",
+                        "example": 150
+                    },
+                    "critical_level": {
+                        "type": "number",
+                        "example": 20,
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "StockHistory": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "stock_id": {
+                        "type": "integer",
+                        "example": 10
+                    },
+                    "old_quantity": {
+                        "type": "number",
+                        "nullable": true
+                    },
+                    "new_quantity": {
+                        "type": "number",
+                        "nullable": true
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "justificativa_ajuste": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "StorePostRequest": {
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "address": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 1000
+                    },
+                    "latitude": {
+                        "type": "number",
+                        "nullable": true
+                    },
+                    "longitude": {
+                        "type": "number",
+                        "nullable": true
+                    },
+                    "admin_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "UpdateStockRequest": {
+                "required": [
+                    "quantity"
+                ],
+                "properties": {
+                    "quantity": {
+                        "type": "number",
+                        "example": 150,
+                        "minimum": 0
+                    },
+                    "critical_level": {
+                        "type": "number",
+                        "example": 20,
+                        "nullable": true,
+                        "minimum": 0
+                    },
+                    "justificativa_ajuste": {
+                        "type": "string",
+                        "nullable": true,
+                        "maxLength": 1000
+                    }
+                },
+                "type": "object"
+            },
+            "StockUpdateResponse": {
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "example": "Stock updated"
+                    },
+                    "stock": {
+                        "$ref": "#/components/schemas/Stock"
+                    }
+                },
+                "type": "object"
+            },
+            "ErrorResponse": {
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Forbidden"
+                    },
+                    "code": {
+                        "type": "integer",
+                        "example": 403
+                    }
+                },
+                "type": "object"
+            },
+            "MessageResponse": {
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "example": "Deleted"
+                    }
+                },
+                "type": "object"
+            }
+        },
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "description": "Token JWT no header Authorization: Bearer {token}",
+                "bearerFormat": "JWT",
+                "scheme": "bearer"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Auth",
+            "description": "Utilizador autenticado (JWT)"
+        },
+        {
+            "name": "Roles",
+            "description": "Papéis e permissões"
+        },
+        {
+            "name": "Posts",
+            "description": "Postos de abastecimento"
+        },
+        {
+            "name": "Stock",
+            "description": "Stock por produto e posto"
+        },
+        {
+            "name": "StockHistory",
+            "description": "Histórico de ajustes de stock"
+        },
+        {
+            "name": "Users",
+            "description": "Utilizadores e associação a postos"
+        }
+    ]
+}

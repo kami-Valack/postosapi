@@ -1,0 +1,189 @@
+Regras de Negócio para o Perfil Gestor - Plataforma PinPoint 
+(API Laravel) 
+Este documento detalha as regras de negócio que governam as ações e interações do perfil 
+Gestor na plataforma PinPoint, com foco na sua implementação através de uma API Laravel. 
+As regras são desenhadas para garantir alta performance, resiliência operacional e 
+conformidade com as especificidades do mercado angolano de distribuição de combustíveis e 
+energia. 
+1. Gestão de Preços e Produtos 
+● RN-G-001: Receção e Confirmação de Preços Decretados: 
+○ Descrição: O Gestor deve receber as atualizações de preços de combustíveis e 
+energia decretadas pelas autoridades competentes (ANPG/IRDP) e confirmá-las 
+na plataforma. 
+○ Validação: O Gestor apenas confirma a receção e aplicação do preço. Não há 
+alteração manual de valores. O sistema deve registar a data/hora da 
+confirmação e o Gestor responsável. Em caso de atraso na confirmação, o 
+Gestor deve indicar o motivo do atraso (ex: "falha de internet", "problema 
+técnico"). 
+○ Impacto: O preço confirmado é refletido na aplicação móvel do utilizador final e 
+nos sistemas de BI. A não confirmação dentro de um prazo pode gerar alertas 
+para o Admin. Os motivos de atraso fornecem dados valiosos para BI sobre a 
+resiliência da rede de comunicação e a prontidão operacional dos postos. 
+○ Laravel: Implementar Policies para verificar permissões de confirmação, 
+Events para notificar sistemas dependentes e Notifications para alertar o 
+Gestor sobre novos preços a confirmar. Adicionar campo motivo_atraso 
+(opcional) na confirmação. 
+● RN-G-002: Gestão de Promoções Locais (Apenas Não-Combustíveis): 
+○ Descrição: O Gestor pode criar promoções de curta duração para produtos ou 
+serviços não-combustíveis (ex: lavagem, loja de conveniência) do seu posto. 
+○ Validação: Promoções devem ter data de início e fim, e não podem exceder 
+limites de desconto definidos pelo Admin. Não aplicável a combustíveis ou 
+energia. 
+○ Impacto: Promoções visíveis apenas para utilizadores na proximidade do posto 
+ou com base em critérios de fidelidade. 
+○ Laravel: Policies para permissões, Jobs para agendamento de promoções e 
+Cache para promoções ativas. 
+2. Gestão de Stock e Disponibilidade 
+● RN-G-003: Atualização e Ajuste de Stock: 
+○ Descrição: O Gestor deve reportar o nível de stock disponível para cada 
+produto no seu posto. Em caso de ajuste de stock (correção de um valor 
+previamente reportado), o Gestor deve fornecer uma justificativa. 
+○ Validação: O stock deve ser um valor numérico não negativo. Alertas 
+automáticos são gerados para o Gestor e Admin quando o stock atinge um nível 
+crítico (definido pelo Admin). O histórico de ajustes de stock com justificativa é 
+registado para fins de auditoria e BI. 
+○ Impacto: Afeta a disponibilidade do posto na aplicação do utilizador final. O 
+histórico de ajustes ajuda a identificar erros operacionais, possíveis desvios ou a 
+necessidade de formação adicional. 
+○ Laravel: Validação no Request, Events para alertas e Notifications para 
+Gestor/Admin. Adicionar campo justificativa_ajuste (opcional) e registo 
+de histórico de ajustes. 
+● RN-G-004: Alertas Preditivos de Rutura: 
+○ Descrição: O sistema deve analisar o histórico de consumo e o stock atual para 
+prever quando um produto irá esgotar, alertando o Gestor proativamente. 
+○ Validação: O modelo preditivo deve ser configurável (ex: média das últimas 
+24h/48h de consumo). 
+○ Impacto: Permite ao Gestor solicitar reabastecimento ou ajustar preços antes da 
+rutura. 
+○ Laravel: Scheduled Jobs para análise preditiva, Notifications para 
+alertas. 
+○ RN-G-004.1: Atualização de Status de Disponibilidade de Combustível (Em 
+Stock / Fora de Stock): 
+■ Descrição: O Gestor deve ser capaz de reportar o status de 
+disponibilidade de cada tipo de combustível (ex: Gasolina, Gasóleo) no 
+seu posto como "Em Stock" ou "Fora de Stock". 
+■ Validação: O status deve ser atualizado de forma rápida e intuitiva. Em 
+caso de "Fora de Stock", o Gestor deve indicar um motivo (ex: "rutura de 
+stock", "bomba avariada"). 
+■ Impacto: Afeta diretamente a informação apresentada na aplicação B2C 
+do PinPoint, informando os condutores sobre a disponibilidade. Os 
+motivos de "Fora de Stock" são cruciais para o BI dos níveis superiores, 
+indicando problemas operacionais ou logísticos. 
+■ Laravel: Policies para permissões, Events para atualizações de 
+status, Notifications para alertas de rutura prolongada para o Admin. 
+Adicionar campo motivo_fora_stock (opcional) e registo de histórico 
+de status. 
+3. Gestão de Serviços e Infraestrutura (Combustíveis e EV) 
+● RN-G-006.1: Gestão de Estações de Carregamento EV: 
+○ Descrição: O Gestor deve ser capaz de reportar o status (disponível, em uso, 
+fora de serviço), o tipo de carregador (lento, rápido, ultrarrápido) e a potência 
+dos pontos de carregamento EV do seu posto. 
+○ Validação: Apenas estações de carregamento pré-registadas e aprovadas pelo 
+Admin podem ser geridas. O status deve ser atualizado em tempo real. 
+○ Impacto: Afeta a visibilidade e a funcionalidade dos pontos de carregamento na 
+aplicação do utilizador final e nos sistemas de BI. 
+○ Laravel: Policies para permissões, Events para atualizações de status, 
+Notifications para alertas de falha. 
+● RN-G-006.2: Monitorização de Consumo EV: 
+○ Descrição: O Gestor deve ter acesso a métricas de consumo de energia dos 
+pontos de carregamento EV (kWh consumidos, tempo de ocupação). 
+○ Validação: Dados devem ser agregados por período (diário, semanal, mensal) e 
+por tipo de carregador. 
+○ Impacto: Fornece dados cruciais para os níveis superiores avaliarem a 
+performance e a viabilidade dos investimentos em EV. 
+○ Laravel: Eloquent para agregação de dados, Scheduled Jobs para 
+processamento de métricas. 
+● RN-G-006.3: Reporte de Incidentes Específicos EV: 
+○ Descrição: O Gestor pode reportar incidentes específicos de estações de 
+carregamento (ex: avaria do carregador, problema de pagamento, vandalismo). 
+○ Validação: O incidente deve ser categorizado e associado a um ponto de 
+carregamento específico. 
+○ Impacto: Notifica o Admin e a equipa de manutenção especializada em EV, 
+iniciando o fluxo de resolução. 
+○ Laravel: Policies para permissões, Media Library para fotos, 
+Notifications para Admin/Equipa Técnica EV. 
+● RN-G-005: Ativação/Desativação de Serviços: 
+○ Descrição: O Gestor pode ativar ou desativar serviços específicos do posto (ex: 
+lavagem, loja de conveniência, carregamento elétrico) conforme a sua 
+disponibilidade. 
+○ Validação: Apenas serviços pré-aprovados pelo Admin podem ser geridos. Em 
+caso de desativação, o Gestor deve indicar o motivo da desativação (ex: 
+"lavagem avariada", "loja fechada para inventário"). 
+○ Impacto: Visibilidade dos serviços na aplicação do utilizador final. Os motivos de 
+desativação fornecem dados para BI sobre a disponibilidade real dos serviços 
+complementares e as causas de inatividade. 
+○ Laravel: Policies para permissões, Events para atualizações de status. 
+Adicionar campo motivo_desativacao (opcional). 
+● RN-G-006: Reporte de Incidentes e Manutenção: 
+○ Descrição: O Gestor pode reportar incidentes (ex: avaria de bomba, falha de 
+energia) com detalhes e fotos. 
+○ Validação: O incidente deve ser categorizado (ex: Urgente, Normal) e associado 
+a um equipamento ou serviço. 
+○ Impacto: Notifica o Admin e inicia o fluxo de resolução de incidentes. 
+○ Laravel: Policies para permissões, Media Library para fotos, 
+Notifications para Admin. 
+4. Marketing de Precisão e Fidelização 
+● RN-G-007: Gestão de Campanhas Promocionais Geolocalizadas: 
+○ Descrição: O Gestor pode criar e gerir campanhas promocionais geolocalizadas 
+para produtos e serviços não-combustíveis (ex: lojas de conveniência Super7, 
+lavagem de carros) do seu posto, visando aumentar o ticket médio por cliente. 
+○ Validação: Campanhas devem ter data de início e fim, orçamento (se aplicável) 
+e segmentação geográfica definida. Não aplicável a combustíveis ou energia. O 
+sistema deve validar a proximidade do utilizador para ativar a promoção. 
+○ Impacto: Aumenta o engajamento do cliente, impulsiona vendas de produtos e 
+serviços complementares e melhora a fidelização. 
+○ Laravel: Policies para permissões, Jobs para agendamento e execução de 
+campanhas, Notifications para envio de ofertas aos utilizadores 
+segmentados, Eloquent para gestão de segmentos de clientes e Cache para 
+promoções ativas. 
+● RN-G-007.1: Monitorização de Performance e Feedback Qualitativo de 
+Campanhas: 
+○ Descrição: O Gestor deve ter acesso a métricas de desempenho das 
+campanhas (ex: número de visualizações, cliques, conversões, ROI). 
+Adicionalmente, o Gestor pode reportar feedback qualitativo sobre a campanha 
+(ex: "promoção gerou muitas vendas", "clientes não se interessaram"). 
+○ Validação: Dados devem ser apresentados de forma clara e em tempo real, 
+permitindo ajustes rápidos nas campanhas ativas. O feedback qualitativo 
+complementa as métricas quantitativas. 
+○ Impacto: Otimiza o investimento em marketing e maximiza o retorno sobre as 
+promoções. O feedback qualitativo fornece insights valiosos para o Marketing da 
+Pumangol, ajudando a entender o impacto local e a ajustar futuras campanhas. 
+○ Laravel: Eloquent para agregação de dados de campanha, Events para 
+registo de interações e Scheduled Jobs para relatórios de performance. 
+Adicionar campo feedback_qualitativo (opcional) para o Gestor. 
+5. Resiliência Operacional (Offline e Sincronização) 
+● RN-G-008: Operação Offline e Sincronização Inteligente: 
+○ Descrição: O Gestor deve ser capaz de realizar atualizações críticas (preços, 
+stock, status) mesmo sem conectividade à internet. Os dados são armazenados 
+localmente e sincronizados automaticamente quando a conexão é restabelecida. 
+○ Validação: O sistema deve resolver conflitos de dados (ex: duas atualizações de 
+preço diferentes para o mesmo produto) com base em regras pré-definidas (ex: 
+última atualização vence, ou prioridade do Admin). 
+○ Impacto: Garante a continuidade da operação e a precisão dos dados mesmo 
+em zonas com conectividade limitada. 
+○ Laravel: Implementar Service Workers (no frontend PWA), API Endpoints 
+para sincronização em lote e lógica de resolução de conflitos no backend. 
+6. Prevenção de Fraudes e Auditoria Local 
+● RN-G-009: Auditoria de Dados e Prevenção de Fraudes: 
+○ Descrição: O sistema deve registar todas as ações do Gestor (confirmação de 
+preços, atualizações de stock, reporte de incidentes), com timestamp e 
+identificação. Alertas são gerados para o Admin em caso de padrões suspeitos 
+(ex: discrepâncias significativas entre stock reportado e vendas, múltiplos 
+reportes de incidentes no mesmo equipamento em curto período). 
+○ Validação: Implementar AuditoriaLog para todas as ações críticas do Gestor. 
+Integração com módulos de BI para análise de anomalias. 
+○ Impacto: Reduz o risco de fraudes (ex: desvio de stock) e garante a integridade 
+dos dados reportados, que são cruciais para os níveis superiores. 
+○ Laravel: Observers para modelos críticos, Events para alertas de fraude, 
+Notifications para Admin. 
+7. Comunicação e Suporte 
+● RN-G-010: Comunicação Direta com Admin: 
+○ Descrição: O Gestor pode enviar mensagens diretas ou pedidos de suporte ao 
+Admin responsável pelo seu posto. 
+○ Validação: As mensagens devem ser categorizadas (ex: Suporte Técnico, 
+Dúvida Operacional). 
+○ Impacto: Agiliza a resolução de problemas e melhora a comunicação interna. 
+○ Laravel: Notifications e um módulo de Chat/Mensagens interno. 
+Estas regras de negócio, quando implementadas na API Laravel, garantirão que o painel do 
+Gestor seja uma ferramenta poderosa para a gestão de postos de abastecimento em Angola, 
+focada na eficiência, na resiliência e na performance. 
