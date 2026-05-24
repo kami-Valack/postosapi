@@ -10,6 +10,7 @@ class JwtUserSyncService
 {
     /**
      * Cria ou atualiza utilizador local a partir do JWT emitido pelo serviço de auth externo.
+     * O papel local é resolvido pelo **nome** do JWT, contra os papéis definidos em config/roles.php.
      * Preserva post_id definido nesta API (associação gestor ↔ posto).
      */
     public function syncFromPayload(object|array $payload): User
@@ -24,7 +25,7 @@ class JwtUserSyncService
         $authUserId = (int) $authUserId;
         $email = (string) ($data['email'] ?? 'user'.$authUserId.'@auth.local');
         $name = (string) ($data['name'] ?? $data['email'] ?? 'User '.$authUserId);
-        $roleId = $this->resolveRoleId($data['role'] ?? null);
+        $roleId = $this->resolveRoleIdFromName($data['role'] ?? null);
 
         $user = User::query()->where('auth_user_id', $authUserId)->first();
 
@@ -52,38 +53,30 @@ class JwtUserSyncService
         return $user->load(['role', 'post']);
     }
 
-    private function resolveRoleId(mixed $roleClaim): ?int
+    /**
+     * Mapeia o nome do papel no JWT para roles.id local (seed/config).
+     * Não usa o role.id do auth externo.
+     */
+    private function resolveRoleIdFromName(mixed $roleClaim): ?int
     {
         if ($roleClaim === null) {
             return null;
         }
 
         $roleName = null;
-        $externalRoleId = null;
 
         if (is_object($roleClaim)) {
             $roleName = $roleClaim->name ?? null;
-            $externalRoleId = $roleClaim->id ?? null;
         } elseif (is_array($roleClaim)) {
             $roleName = $roleClaim['name'] ?? null;
-            $externalRoleId = $roleClaim['id'] ?? null;
         } elseif (is_string($roleClaim)) {
             $roleName = $roleClaim;
         }
 
-        if ($roleName) {
-            $role = Role::query()->firstOrCreate(
-                ['name' => $roleName],
-                ['permissions' => null]
-            );
-
-            return $role->id;
+        if (! $roleName) {
+            return null;
         }
 
-        if ($externalRoleId !== null) {
-            return Role::query()->find((int) $externalRoleId)?->id;
-        }
-
-        return null;
+        return Role::query()->where('name', $roleName)->value('id');
     }
 }

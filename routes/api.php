@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\PostoPublicController;
 use App\Http\Controllers\MeController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\RoleController;
@@ -7,6 +8,10 @@ use App\Http\Controllers\StockController;
 use App\Http\Controllers\StockHistoryController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
+
+// Rotas públicas B2C (sem JWT)
+Route::get('/postos/search', [PostoPublicController::class, 'search']);
+Route::get('/postos', [PostoPublicController::class, 'index']);
 
 Route::get('/me', MeController::class);
 

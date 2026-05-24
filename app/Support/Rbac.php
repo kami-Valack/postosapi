@@ -7,18 +7,30 @@ use Illuminate\Http\Request;
 
 class Rbac
 {
-    /** Papéis com permissão de administração (criar postos, associar utilizadores, etc.). */
+    /** Nomes alternativos aceites quando o JWT não traz role_id local ainda. */
     private const ADMIN_ALIASES = [
         'admin',
         'administrator',
         'superadmin',
         'super_admin',
+        'super_admin_premium',
     ];
 
     private const GESTOR_ALIASES = [
         'gestor',
         'manager',
     ];
+
+    public static function roleIdFromRequest(Request $request, ?User $user = null): ?int
+    {
+        $user ??= $request->user();
+
+        if ($user?->role_id) {
+            return (int) $user->role_id;
+        }
+
+        return null;
+    }
 
     public static function roleNameFromRequest(Request $request, ?User $user = null): ?string
     {
@@ -60,15 +72,23 @@ class Rbac
         return strtolower(str_replace([' ', '-'], '_', trim($roleName)));
     }
 
-    public static function isAdmin(?string $roleName): bool
+    public static function isAdmin(?string $roleName, ?int $roleId = null): bool
     {
+        if (RoleIds::isAdminId($roleId)) {
+            return true;
+        }
+
         $normalized = self::normalizeRoleName($roleName);
 
         return $normalized !== null && in_array($normalized, self::ADMIN_ALIASES, true);
     }
 
-    public static function isGestor(?string $roleName): bool
+    public static function isGestor(?string $roleName, ?int $roleId = null): bool
     {
+        if (RoleIds::isGestorId($roleId)) {
+            return true;
+        }
+
         $normalized = self::normalizeRoleName($roleName);
 
         return $normalized !== null && in_array($normalized, self::GESTOR_ALIASES, true);
@@ -76,11 +96,21 @@ class Rbac
 
     public static function isAdminRequest(Request $request, ?User $user = null): bool
     {
-        return self::isAdmin(self::roleNameFromRequest($request, $user));
+        $user ??= $request->user();
+
+        return self::isAdmin(
+            self::roleNameFromRequest($request, $user),
+            self::roleIdFromRequest($request, $user)
+        );
     }
 
     public static function isGestorRequest(Request $request, ?User $user = null): bool
     {
-        return self::isGestor(self::roleNameFromRequest($request, $user));
+        $user ??= $request->user();
+
+        return self::isGestor(
+            self::roleNameFromRequest($request, $user),
+            self::roleIdFromRequest($request, $user)
+        );
     }
 }

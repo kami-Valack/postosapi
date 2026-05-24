@@ -9,6 +9,19 @@ Este README descreve o que o papel **Gestor** (gestor de posto) pode fazer na AP
 - **Spec JSON:** `GET /api/docs/openapi.json`.
 - Regenerar após alterações: `composer swagger` ou `php artisan l5-swagger:generate`.
 
+## Papéis (`role_id` nesta API)
+
+| ID | Nome | Tipo |
+|----|------|------|
+| **1** | Super Admin Premium | admin |
+| **2** | Super Admin | admin |
+| **3** | Admin | admin |
+| **4** | Gestor | gestor |
+
+Documentação completa: [docs/ROLES.md](docs/ROLES.md). Listar: `GET /api/roles`.
+
+Após deploy: `php artisan db:seed --class=RoleSeeder`
+
 ## Autenticação externa (JWT)
 
 - O login é feito noutro serviço (ex. `users.pinpointech.com`); esta API **não** tem endpoint de login.
@@ -41,16 +54,16 @@ curl -X POST "http://localhost:8000/api/posts" \
   -d '{"name":"Posto Luanda Centro","address":"Rua X","is_active":true}'
 ```
 
-2. **Associar utilizador ao posto** (`post_id` na tabela `users`):
+2. **Associar gestor ao posto** — só `role_id: 4` pode ter `post_id`:
 
 ```bash
 curl -X PATCH "http://localhost:8000/api/users/5" \
-  -H "Authorization: Bearer <JWT>" \
+  -H "Authorization: Bearer <JWT admin>" \
   -H "Content-Type: application/json" \
-  -d '{"post_id":1,"role_id":3}'
+  -d '{"post_id":1,"role_id":4}'
 ```
 
-O utilizador é **sincronizado automaticamente** no primeiro pedido com JWT válido (`auth_user_id` = `sub` do token). Para associar um gestor ao posto, use o `auth_user_id` (ex.: `1` para Alice) ou o `id` local devolvido em `GET /api/me`.
+O utilizador é **sincronizado automaticamente** no primeiro pedido com JWT válido (`auth_user_id` = `sub` do token). Para associar um gestor ao posto, use o `auth_user_id` ou o `id` local devolvido em `GET /api/me`. Utilizadores admin (1–3) **não** recebem `post_id`.
 
 ## Endpoints relevantes
 

@@ -21,6 +21,7 @@ class VerifyJwtMiddleware
         $uri = $request->getRequestUri();
         if (str_starts_with($uri, '/api/docs')
             || str_starts_with($uri, '/api/documentation')
+            || str_starts_with($uri, '/api/postos')
             || str_starts_with($uri, '/docs')) {
             return $next($request);
         }

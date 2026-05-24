@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StorePostRequest;
 use App\Models\Post;
+use App\Services\PostoSearchService;
 use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
 
@@ -82,9 +83,19 @@ class PostController extends Controller
     {
         $this->authorize('create', Post::class);
 
-        $post = Post::create($request->validated());
+        $data = $request->validated();
+        $serviceNames = $data['services'] ?? null;
+        unset($data['services']);
 
-        return response()->json($post, 201);
+        $post = Post::create($data);
+
+        if (is_array($serviceNames)) {
+            $post->syncServiceNames($serviceNames);
+        }
+
+        PostoSearchService::flushCache();
+
+        return response()->json($post->load('services'), 201);
     }
 
     #[OA\Put(
@@ -115,9 +126,19 @@ class PostController extends Controller
     {
         $this->authorize('update', $post);
 
-        $post->update($request->validated());
+        $data = $request->validated();
+        $serviceNames = $data['services'] ?? null;
+        unset($data['services']);
 
-        return response()->json($post);
+        $post->update($data);
+
+        if (is_array($serviceNames)) {
+            $post->syncServiceNames($serviceNames);
+        }
+
+        PostoSearchService::flushCache();
+
+        return response()->json($post->load('services'));
     }
 
     #[OA\Delete(
@@ -144,6 +165,8 @@ class PostController extends Controller
         $this->authorize('delete', $post);
 
         $post->delete();
+
+        PostoSearchService::flushCache();
 
         return response()->json(['message' => 'Deleted']);
     }

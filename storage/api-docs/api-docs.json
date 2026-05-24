@@ -2,7 +2,7 @@
     "openapi": "3.0.0",
     "info": {
         "title": "Postos API",
-        "description": "API de gestão de postos (PinPoint): JWT, RBAC, stock e histórico de ajustes.",
+        "description": "API de gestão de postos (PinPoint): JWT, RBAC, stock e histórico.\r\n\r\n**Rotas públicas (sem JWT):**\r\n- `GET /postos` — listar, paginar (`?page=`) ou detalhe (`?id=`)\r\n- `GET /postos/search` — pesquisa rápida (`?q=`, opcional `limit`, `tipo`, `combustivel`, `status`)\r\n\r\n**Papéis locais (`users.role_id`):** ver `docs/ROLES.md` e `GET /api/roles`.",
         "contact": {
             "email": "suporte@postosapi.local"
         },
@@ -255,23 +255,183 @@
                 ]
             }
         },
+        "/postos/search": {
+            "get": {
+                "tags": [
+                    "Postos Públicos"
+                ],
+                "summary": "Pesquisar postos (público, rápido)",
+                "description": "**Rota pública** — não requer `Authorization`.\n\nPesquisa em `nome`, `endereco` e `combustivel` (apenas postos activos).\n\n- `q`: obrigatório, mínimo 2 caracteres\n- `limit`: opcional (default 20, máximo 50)\n- Filtros opcionais: `tipo`, `combustivel`, `status`\n- Resposta em cache ~60 segundos\n\nExemplo: `GET /api/postos/search?q=shell&status=aberto&limit=10`",
+                "operationId": "8fb713bcd00ed77ef0ad5ef91996b491",
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "description": "Termo de pesquisa (nome, morada ou combustível)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "shell",
+                            "minLength": 2
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Máximo de resultados",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 20,
+                            "default": 20,
+                            "maximum": 50
+                        }
+                    },
+                    {
+                        "name": "tipo",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "combustivel"
+                        }
+                    },
+                    {
+                        "name": "combustivel",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "Gasolina"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "aberto"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de postos que correspondem à pesquisa",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PostoSearchResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validação falhou (ex.: q em falta ou &lt; 2 caracteres)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The q field is required."
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/postos": {
+            "get": {
+                "tags": [
+                    "Postos Públicos"
+                ],
+                "summary": "Listar postos (público)",
+                "description": "**Rota pública** — não requer `Authorization`.\n\n- Sem parâmetros: todos os postos activos (array)\n- `?id=1`: um posto (`PostoPublic`)\n- `?page=2`: paginação, 10 por página (`PostoPublicPaginatedResponse`)\n\nPara pesquisa textual use `GET /postos/search?q=...`.",
+                "operationId": "0d8c4c8337fe50c98d64db4223fe70c5",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "query",
+                        "description": "ID do posto",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Número da página (10 postos por página)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Posto único, lista ou página paginada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "oneOf": [
+                                        {
+                                            "$ref": "#/components/schemas/PostoPublic"
+                                        },
+                                        {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/PostoPublic"
+                                            }
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/PostoPublicPaginatedResponse"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Posto não encontrado"
+                    }
+                }
+            }
+        },
         "/roles": {
             "get": {
                 "tags": [
                     "Roles"
                 ],
-                "summary": "Listar papéis",
+                "summary": "Listar papéis (catálogo local)",
+                "description": "IDs fixos desta API: 1=Super Admin Premium, 2=Super Admin, 3=Admin, 4=Gestor. Ver docs/ROLES.md.",
                 "operationId": "6e28bdec08d7292bde33180ca5928718",
                 "responses": {
                     "200": {
-                        "description": "Lista de papéis",
+                        "description": "Catálogo de papéis com id, name, type e description",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/Role"
-                                    }
+                                    "properties": {
+                                        "roles": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/RoleCatalogEntry"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         }
@@ -298,9 +458,16 @@
                     {
                         "name": "role",
                         "in": "path",
+                        "description": "1=Super Admin Premium, 2=Super Admin, 3=Admin, 4=Gestor",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "integer",
+                            "enum": [
+                                1,
+                                2,
+                                3,
+                                4
+                            ]
                         }
                     }
                 ],
@@ -310,7 +477,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Role"
+                                    "$ref": "#/components/schemas/RoleCatalogEntry"
                                 }
                             }
                         }
@@ -570,8 +737,8 @@
                 "tags": [
                     "Users"
                 ],
-                "summary": "Associar utilizador a posto e/ou papel (admin)",
-                "description": "O parâmetro {user} aceita o id local ou o auth_user_id (sub do JWT externo).",
+                "summary": "Associar gestor a posto (admin)",
+                "description": "Apenas utilizadores com role_id=4 (Gestor) podem receber post_id. Admins (1–3) nunca são associados a postos. Quem executa o pedido deve ser admin (1–3).",
                 "operationId": "a19bd7413ea8c31a575987f164c35939",
                 "parameters": [
                     {
@@ -591,13 +758,15 @@
                             "schema": {
                                 "properties": {
                                     "post_id": {
+                                        "description": "Só permitido se o utilizador for Gestor (role_id=4)",
                                         "type": "integer",
                                         "example": 1,
                                         "nullable": true
                                     },
                                     "role_id": {
+                                        "description": "Use 4 para gestor. Se mudar para 1–3, post_id é removido.",
                                         "type": "integer",
-                                        "example": 3,
+                                        "example": 4,
                                         "nullable": true
                                     }
                                 },
@@ -620,7 +789,7 @@
                         "description": "Utilizador não encontrado"
                     },
                     "422": {
-                        "description": "Validação falhou"
+                        "description": "Validação falhou ou utilizador não é gestor"
                     }
                 },
                 "security": [
@@ -633,6 +802,133 @@
     },
     "components": {
         "schemas": {
+            "PostoSearchResponse": {
+                "required": [
+                    "q",
+                    "count",
+                    "postos"
+                ],
+                "properties": {
+                    "q": {
+                        "description": "Termo pesquisado",
+                        "type": "string",
+                        "example": "shell"
+                    },
+                    "count": {
+                        "description": "Número de resultados devolvidos",
+                        "type": "integer",
+                        "example": 2
+                    },
+                    "postos": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/PostoPublic"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "PostoPublicPaginatedResponse": {
+                "properties": {
+                    "postos": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/PostoPublic"
+                        }
+                    },
+                    "page": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "per_page": {
+                        "type": "integer",
+                        "example": 10
+                    },
+                    "total": {
+                        "type": "integer",
+                        "example": 25
+                    },
+                    "last_page": {
+                        "type": "integer",
+                        "example": 3
+                    }
+                },
+                "type": "object"
+            },
+            "PostoPublic": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "example": "1"
+                    },
+                    "nome": {
+                        "type": "string",
+                        "example": "Posto Shell"
+                    },
+                    "endereco": {
+                        "type": "string",
+                        "example": "Av. 4 de Fevereiro, 123"
+                    },
+                    "tipo": {
+                        "type": "string",
+                        "example": "combustivel"
+                    },
+                    "coordinates": {
+                        "properties": {
+                            "latitude": {
+                                "type": "number",
+                                "format": "float",
+                                "example": -8.8383
+                            },
+                            "longitude": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 13.2344
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "preco": {
+                        "type": "string",
+                        "example": "320 Kz/L",
+                        "nullable": true
+                    },
+                    "precoPremium": {
+                        "type": "string",
+                        "example": "340 Kz/L",
+                        "nullable": true
+                    },
+                    "combustivel": {
+                        "type": "string",
+                        "example": "Gasolina",
+                        "nullable": true
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "aberto"
+                    },
+                    "hours24": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "image": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "services": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "Wifi",
+                            "Lavagem",
+                            "Loja de Conveniência"
+                        ]
+                    }
+                },
+                "type": "object"
+            },
             "Post": {
                 "properties": {
                     "id": {
@@ -665,6 +961,39 @@
                         "type": "boolean",
                         "example": true
                     },
+                    "tipo": {
+                        "type": "string",
+                        "example": "combustivel"
+                    },
+                    "preco": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "preco_premium": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "combustivel": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "aberto"
+                    },
+                    "hours_24": {
+                        "type": "boolean"
+                    },
+                    "image": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "services": {
+                        "type": "array",
+                        "items": {
+                            "type": "object"
+                        }
+                    },
                     "created_at": {
                         "type": "string",
                         "format": "date-time",
@@ -678,15 +1007,40 @@
                 },
                 "type": "object"
             },
+            "RoleCatalogEntry": {
+                "properties": {
+                    "id": {
+                        "description": "1=Super Admin Premium, 2=Super Admin, 3=Admin, 4=Gestor",
+                        "type": "integer",
+                        "example": 4
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Gestor"
+                    },
+                    "type": {
+                        "type": "string",
+                        "example": "gestor",
+                        "enum": [
+                            "admin",
+                            "gestor"
+                        ]
+                    },
+                    "description": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "Role": {
                 "properties": {
                     "id": {
                         "type": "integer",
-                        "example": 1
+                        "example": 4
                     },
                     "name": {
                         "type": "string",
-                        "example": "gestor"
+                        "example": "Gestor"
                     },
                     "permissions": {
                         "type": "object",
@@ -809,6 +1163,44 @@
                     "is_active": {
                         "type": "boolean",
                         "nullable": true
+                    },
+                    "tipo": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "preco": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "preco_premium": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "combustivel": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "status": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "hours_24": {
+                        "type": "boolean",
+                        "nullable": true
+                    },
+                    "image": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "services": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "Wifi",
+                            "Lavagem"
+                        ]
                     }
                 },
                 "type": "object"
@@ -892,7 +1284,7 @@
         },
         {
             "name": "Roles",
-            "description": "Papéis e permissões"
+            "description": "Catálogo de papéis (IDs 1–4 definidos nesta API)"
         },
         {
             "name": "Posts",
@@ -909,6 +1301,10 @@
         {
             "name": "Users",
             "description": "Utilizadores e associação a postos"
+        },
+        {
+            "name": "Postos Públicos",
+            "description": "B2C sem autenticação: listagem (`/postos`), pesquisa (`/postos/search?q=`)"
         }
     ]
 }
