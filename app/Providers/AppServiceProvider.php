@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
@@ -12,7 +13,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Bind the exception handler implementation to our App\Exceptions\Handler
         $this->app->singleton(
             \Illuminate\Contracts\Debug\ExceptionHandler::class,
             \App\Exceptions\Handler::class
@@ -24,25 +24,32 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        $this->configureHttpsUrls();
+        $this->configurePublicUrls();
 
-        // Register model observers
         \App\Models\Stock::observe(\App\Observers\StockObserver::class);
     }
 
     /**
-     * Evita mixed-content (HTTPS na página, HTTP no spec Swagger/Redoc).
+     * Define URL base da aplicação no código/config (não depende só do proxy/nginx).
      */
-    private function configureHttpsUrls(): void
+    private function configurePublicUrls(): void
     {
-        $appUrl = (string) config('app.url');
-        $forceHttps = filter_var(env('FORCE_HTTPS', false), FILTER_VALIDATE_BOOL)
-            || str_starts_with($appUrl, 'https://');
+        $publicUrl = rtrim((string) config('postos.public_url'), '/');
+        if ($publicUrl === '') {
+            return;
+        }
 
-        $this->app->booted(function () use ($forceHttps): void {
-            if ($forceHttps || request()->secure()) {
-                URL::forceScheme('https');
-            }
-        });
+        Config::set('app.url', $publicUrl);
+        URL::forceRootUrl($publicUrl);
+
+        $forceHttps = config('postos.force_https');
+        if ($forceHttps === null) {
+            $forceHttps = str_starts_with($publicUrl, 'https://');
+        }
+        if (filter_var($forceHttps, FILTER_VALIDATE_BOOL)) {
+            URL::forceScheme('https');
+        }
+
+        Config::set('l5-swagger.defaults.constants.L5_SWAGGER_CONST_HOST', $publicUrl);
     }
 }

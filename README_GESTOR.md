@@ -11,18 +11,16 @@ Este README descreve o que o papel **Gestor** (gestor de posto) pode fazer na AP
 
 ### Deploy com HTTPS (evitar erro mixed-content no Swagger)
 
-Se a página abre em `https://` mas o spec pede `http://`, configure no `.env` do servidor:
+As URLs públicas estão em `config/postos.php` (valor por defeito: `https://postos.pinpointech.com`). No `.env` do servidor:
 
 ```env
-APP_URL=https://postos.pinpointech.com
+APP_PUBLIC_URL=https://postos.pinpointech.com
 FORCE_HTTPS=true
-L5_SWAGGER_USE_ABSOLUTE_PATH=false
-L5_SWAGGER_CONST_HOST=https://postos.pinpointech.com
 ```
 
-Depois: `php artisan config:clear` (e reiniciar PHP-FPM / queue se aplicável).
+O Swagger usa caminho **relativo** `POSTOS_SWAGGER_SPEC_PATH=/docs?api-docs.json` (evita mixed-content). Depois: `php artisan config:clear` e reiniciar PHP.
 
-O proxy (Nginx, Cloudflare, etc.) deve enviar `X-Forwarded-Proto: https` — a API já confia em proxies (`trustProxies`).
+Opcional: Nginx com `X-Forwarded-Proto: https` (a API confia em proxies).
 
 ## Papéis (`role_id` nesta API)
 

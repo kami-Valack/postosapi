@@ -119,8 +119,7 @@ Route::get('/docs/openapi.json', function () {
 });
 
 Route::get('/docs', function () {
-    // Caminho relativo: usa o mesmo esquema (https) da página, evita mixed-content.
-    $jsonUrl = '/api/docs/openapi.json';
+    $jsonUrl = config('postos.openapi_json_path', '/api/docs/openapi.json');
     $html = "<!doctype html><html><head><meta charset=\"utf-8\"><title>Postos API Docs</title></head><body>\n".
         "<redoc spec-url=\"{$jsonUrl}\"></redoc>\n".
         "<script src=\"https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js\"></script>\n".
