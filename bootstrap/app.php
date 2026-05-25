@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('campaigns:sync-status')->everyFiveMinutes();
     })
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->trustProxies(at: '*');
         $middleware->prepend(\App\Http\Middleware\VerifyJwtMiddleware::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
