@@ -53,6 +53,7 @@ class PostoSearchService
             ->searchTerm($q)
             ->with([
                 'services' => fn ($relation) => $relation->select('services.id', 'services.name'),
+                'fuelAvailabilities.fuelType',
             ])
             ->orderBy('name');
 

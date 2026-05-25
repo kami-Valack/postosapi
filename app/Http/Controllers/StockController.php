@@ -10,6 +10,9 @@ use OpenApi\Attributes as OA;
 
 class StockController extends Controller
 {
+    public function __construct(
+        private readonly \App\Services\StockRuptureAnalysisService $ruptureAnalysis
+    ) {}
     #[OA\Patch(
         path: '/posts/{post}/products/{product}/stock',
         summary: 'Atualizar stock de um produto no posto (gestor)',
@@ -63,6 +66,15 @@ class StockController extends Controller
             'justificativa_ajuste' => $request->input('justificativa_ajuste'),
         ]);
 
-        return response()->json(['message' => 'Stock updated', 'stock' => $stock]);
+        $stock->refresh();
+        $ruptureAlert = $this->ruptureAnalysis->analyzeStock($stock);
+
+        return response()->json([
+            'message' => 'Stock updated',
+            'stock' => $stock,
+            'rupture_alert' => $ruptureAlert
+                ? $this->ruptureAnalysis->format($ruptureAlert)
+                : null,
+        ]);
     }
 }

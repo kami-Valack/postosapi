@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StorePostRequest;
 use App\Models\Post;
+use App\Services\GestorPostOperationalService;
 use App\Services\PostoSearchService;
 use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
@@ -93,9 +94,14 @@ class PostController extends Controller
             $post->syncServiceNames($serviceNames);
         }
 
+        app(GestorPostOperationalService::class)->ensureDefaultFuelAvailabilities(
+            $post,
+            $request->user()?->id
+        );
+
         PostoSearchService::flushCache();
 
-        return response()->json($post->load('services'), 201);
+        return response()->json($post->load(['services', 'fuelAvailabilities.fuelType']), 201);
     }
 
     #[OA\Put(

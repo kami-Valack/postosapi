@@ -5,13 +5,17 @@ namespace App\Http\Controllers;
 use App\Http\Resources\PostoPublicResource;
 use App\Models\Post;
 use App\Services\PostoSearchService;
+use App\Services\CampaignService;
+use App\Services\PromotionService;
 use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
 
 class PostoPublicController extends Controller
 {
     public function __construct(
-        private readonly PostoSearchService $postoSearch
+        private readonly PostoSearchService $postoSearch,
+        private readonly PromotionService $promotionService,
+        private readonly CampaignService $campaignService
     ) {}
 
     #[OA\Get(
@@ -147,19 +151,25 @@ DESC,
         if ($request->filled('id')) {
             $post = Post::query()
                 ->publicActive()
-                ->with('services')
+                ->with(['services', 'fuelAvailabilities.fuelType'])
                 ->find($request->query('id'));
 
             if (! $post) {
                 return response()->json(['message' => 'Posto não encontrado'], 404);
             }
 
-            return new PostoPublicResource($post);
+            return response()->json(array_merge(
+                (new PostoPublicResource($post))->resolve(),
+                [
+                    'promocoes' => $this->promotionService->activeForPublic($post),
+                    'campanhas' => $this->campaignService->activeForPost($post),
+                ]
+            ));
         }
 
         $query = Post::query()
             ->publicActive()
-            ->with('services')
+            ->with(['services', 'fuelAvailabilities.fuelType'])
             ->orderBy('name');
 
         if ($request->has('page')) {

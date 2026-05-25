@@ -15,6 +15,1160 @@
         }
     ],
     "paths": {
+        "/admin/incidents": {
+            "get": {
+                "tags": [
+                    "Incidentes"
+                ],
+                "summary": "Listar todos os incidentes (admin)",
+                "description": "RN-G-006: visão global para resolução. Filtros: status, category, post_id.",
+                "operationId": "93855f23750ee5cc059ffed8b092af6d",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "category",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "urgente",
+                                "normal"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "post_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada"
+                    },
+                    "403": {
+                        "description": "Apenas admin"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/incidents/{incident}": {
+            "patch": {
+                "tags": [
+                    "Incidentes"
+                ],
+                "summary": "Actualizar estado do incidente (admin)",
+                "operationId": "3157a979d661f08a742f8183412e6fd5",
+                "parameters": [
+                    {
+                        "name": "incident",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateIncidentStatusRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Actualizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/IncidentResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Apenas admin"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/price-decrees": {
+            "get": {
+                "tags": [
+                    "Preços"
+                ],
+                "summary": "Listar preços decretados (admin)",
+                "operationId": "0983854ef95cc2222b7721aa465a57bb",
+                "responses": {
+                    "200": {
+                        "description": "Lista de decretos"
+                    },
+                    "403": {
+                        "description": "Apenas admin"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Preços"
+                ],
+                "summary": "Publicar preço decretado ANPG/IRDP (admin)",
+                "description": "RN-G-001: define preços; gestores apenas confirmam aplicação no posto.",
+                "operationId": "c9533727fec21867deea42f3be6ee3e5",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PublishPriceDecreeRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Decreto publicado"
+                    },
+                    "403": {
+                        "description": "Apenas admin"
+                    },
+                    "422": {
+                        "description": "Validação"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/campaigns/nearby": {
+            "get": {
+                "tags": [
+                    "Campanhas Públicas"
+                ],
+                "summary": "Campanhas activas perto do utilizador (RN-G-007)",
+                "description": "Rota pública. Valida proximidade geográfica ao posto (raio da campanha).",
+                "operationId": "9c388c0628729242b885ec5896157cd1",
+                "parameters": [
+                    {
+                        "name": "latitude",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "number",
+                            "format": "float"
+                        }
+                    },
+                    {
+                        "name": "longitude",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "number",
+                            "format": "float"
+                        }
+                    },
+                    {
+                        "name": "post_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Campanhas próximas"
+                    }
+                }
+            }
+        },
+        "/campaigns/{campaign}/interactions": {
+            "post": {
+                "tags": [
+                    "Campanhas Públicas"
+                ],
+                "summary": "Registar visualização/clique/conversão",
+                "description": "Exige coordenadas dentro do raio geográfico da campanha.",
+                "operationId": "e257c1c363d391d155b165f09df52392",
+                "parameters": [
+                    {
+                        "name": "campaign",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TrackCampaignInteractionRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Interacção registada"
+                    },
+                    "422": {
+                        "description": "Fora do raio ou campanha inactiva"
+                    }
+                }
+            }
+        },
+        "/posts/{post}/campaigns": {
+            "get": {
+                "tags": [
+                    "Gestor",
+                    "Campanhas"
+                ],
+                "summary": "Listar campanhas geolocalizadas (RN-G-007)",
+                "operationId": "122649e44dd72f350fed326591bc17fe",
+                "parameters": [
+                    {
+                        "name": "post",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de campanhas"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Gestor",
+                    "Campanhas"
+                ],
+                "summary": "Criar campanha (não-combustível, geolocalizada)",
+                "operationId": "a7e7bd53dea14f0a8063a8d45768ec54",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreCampaignRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Campanha criada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/posts/{post}/campaigns/{campaign}": {
+            "patch": {
+                "tags": [
+                    "Gestor",
+                    "Campanhas"
+                ],
+                "summary": "Actualizar campanha",
+                "operationId": "c60ee6419da62d2404118ced3733508a",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateCampaignRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Actualizada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/posts/{post}/campaigns/{campaign}/performance": {
+            "get": {
+                "tags": [
+                    "Gestor",
+                    "Campanhas"
+                ],
+                "summary": "Métricas de performance (RN-G-007.1)",
+                "operationId": "b3a20886954390885526d83fe94d7a18",
+                "responses": {
+                    "200": {
+                        "description": "Métricas"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/posts/{post}/campaigns/{campaign}/feedback": {
+            "patch": {
+                "tags": [
+                    "Gestor",
+                    "Campanhas"
+                ],
+                "summary": "Feedback qualitativo da campanha (RN-G-007.1)",
+                "operationId": "610702af9603b6deabb5a30972727866",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CampaignFeedbackRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Feedback registado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/posts/{post}/campaigns/{campaign}/pause": {
+            "post": {
+                "tags": [
+                    "Gestor",
+                    "Campanhas"
+                ],
+                "summary": "Pausar campanha activa",
+                "operationId": "a1e197b0c61f6e1f651cbc4a073b6966",
+                "responses": {
+                    "200": {
+                        "description": "Pausada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/posts/{post}/campaigns/{campaign}/resume": {
+            "post": {
+                "tags": [
+                    "Gestor",
+                    "Campanhas"
+                ],
+                "summary": "Retomar campanha pausada",
+                "operationId": "781ba734f4c7d3af336f220c84643f37",
+                "responses": {
+                    "200": {
+                        "description": "Retomada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/posts/{post}/campaigns/{campaign}/cancel": {
+            "post": {
+                "tags": [
+                    "Gestor",
+                    "Campanhas"
+                ],
+                "summary": "Cancelar campanha",
+                "operationId": "95b4da530c9452076a9e77e70d184bab",
+                "responses": {
+                    "200": {
+                        "description": "Cancelada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/gestor/catalog": {
+            "get": {
+                "tags": [
+                    "Gestor"
+                ],
+                "summary": "Catálogo para gestão operacional",
+                "description": "Tipos de combustível e serviços aprovados para configurar no posto.",
+                "operationId": "b644ba755fcac7116076ba4eb4eed2dc",
+                "responses": {
+                    "200": {
+                        "description": "Catálogo"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/posts/{post}/incidents": {
+            "get": {
+                "tags": [
+                    "Gestor",
+                    "Incidentes"
+                ],
+                "summary": "Listar incidentes do posto (gestor)",
+                "operationId": "e9583ec8cc020177a9cf58344621b643",
+                "parameters": [
+                    {
+                        "name": "post",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de incidentes"
+                    },
+                    "403": {
+                        "description": "Sem permissão"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Gestor",
+                    "Incidentes"
+                ],
+                "summary": "Reportar incidente (gestor, RN-G-006)",
+                "description": "Categorias: urgente, normal. Tipos: bomba, servico, energia, ev_charger, outro. Fotos opcionais (multipart).",
+                "operationId": "eba57a34594cebcf3a9d3462c826eebc",
+                "parameters": [
+                    {
+                        "name": "post",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreIncidentRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Incidente criado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/IncidentResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Sem permissão"
+                    },
+                    "422": {
+                        "description": "Validação"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/posts/{post}/incidents/{incident}": {
+            "get": {
+                "tags": [
+                    "Gestor",
+                    "Incidentes"
+                ],
+                "summary": "Detalhe de um incidente",
+                "operationId": "fe324dcf87ff339051a837312002d260",
+                "parameters": [
+                    {
+                        "name": "post",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "incident",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Incidente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/IncidentResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Não encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/posts/{post}/sync": {
+            "post": {
+                "tags": [
+                    "Gestor",
+                    "Offline"
+                ],
+                "summary": "Sincronizar lote offline (RN-G-008)",
+                "description": "Processa operações armazenadas localmente com resolução de conflitos.",
+                "operationId": "cf3f639b8575068d2dec0196fb3da232",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OfflineSyncBatchRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Lote processado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/posts/{post}/sync/batches": {
+            "get": {
+                "tags": [
+                    "Gestor",
+                    "Offline"
+                ],
+                "summary": "Histórico de sincronizações",
+                "operationId": "e44e82f5ef7a04614707b6cb3cd7d86e",
+                "responses": {
+                    "200": {
+                        "description": "Lista de lotes"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/posts/{post}/sync/batches/{batch}": {
+            "get": {
+                "tags": [
+                    "Gestor",
+                    "Offline"
+                ],
+                "summary": "Detalhe de um lote de sincronização",
+                "operationId": "42202b5f638d37010a0140e4ba72a8eb",
+                "responses": {
+                    "200": {
+                        "description": "Detalhe do lote"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/posts/{post}/operational": {
+            "get": {
+                "tags": [
+                    "Gestor"
+                ],
+                "summary": "Estado operacional do posto (gestor)",
+                "description": "Status do posto, serviços (activos/inactivos) e disponibilidade de combustíveis. Gestor só no seu posto.",
+                "operationId": "ebd2f912239bb97a75943e459f314129",
+                "parameters": [
+                    {
+                        "name": "post",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Estado operacional",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GestorOperationalResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Sem permissão"
+                    },
+                    "404": {
+                        "description": "Posto não encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Gestor"
+                ],
+                "summary": "Actualizar estado operacional (gestor)",
+                "description": "RN-G-004.1 combustíveis, RN-G-005 serviços. Alterar status, serviços e disponibilidade gasolina/gasóleo/elétrico.",
+                "operationId": "b668ca1ae4e0add8de2cabfe3dea50cf",
+                "parameters": [
+                    {
+                        "name": "post",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateGestorOperationalRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Actualizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GestorOperationalResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Sem permissão"
+                    },
+                    "422": {
+                        "description": "Validação"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/posts/{post}/price-decrees": {
+            "get": {
+                "tags": [
+                    "Gestor",
+                    "Preços"
+                ],
+                "summary": "Preços decretados pendentes/confirmados (gestor)",
+                "description": "RN-G-001: lista decretos para o posto do gestor. Gestor não altera valores manualmente.",
+                "operationId": "1cfecb08b6d7375bc0a31b8a7779d797",
+                "parameters": [
+                    {
+                        "name": "post",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de decretos"
+                    },
+                    "403": {
+                        "description": "Sem permissão"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/posts/{post}/price-decrees/{priceDecree}/confirm": {
+            "post": {
+                "tags": [
+                    "Gestor",
+                    "Preços"
+                ],
+                "summary": "Confirmar aplicação de preço decretado (gestor)",
+                "description": "RN-G-001: confirma receção; aplica preco ao posto. Se após o prazo, motivo_atraso obrigatório.",
+                "operationId": "81e2a9add1d492d713c166fb46563ba8",
+                "parameters": [
+                    {
+                        "name": "post",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "priceDecree",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ConfirmPriceDecreeRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Preço confirmado e aplicado"
+                    },
+                    "403": {
+                        "description": "Sem permissão"
+                    },
+                    "422": {
+                        "description": "Já confirmado ou falta motivo_atraso"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/posts/{post}/promotions": {
+            "get": {
+                "tags": [
+                    "Gestor",
+                    "Promoções"
+                ],
+                "summary": "Listar promoções locais do posto (RN-G-002)",
+                "operationId": "4fbffb10894fdf753cd3551f3a31f21f",
+                "parameters": [
+                    {
+                        "name": "post",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "scheduled",
+                                "active",
+                                "ended",
+                                "cancelled"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de promoções"
+                    },
+                    "403": {
+                        "description": "Sem permissão"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Gestor",
+                    "Promoções"
+                ],
+                "summary": "Criar promoção local (não-combustível)",
+                "operationId": "f5eda117386cd947cf645afbde3d05aa",
+                "parameters": [
+                    {
+                        "name": "post",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StorePromotionRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Promoção criada"
+                    },
+                    "422": {
+                        "description": "Validação"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/posts/{post}/promotions/{promotion}": {
+            "patch": {
+                "tags": [
+                    "Gestor",
+                    "Promoções"
+                ],
+                "summary": "Actualizar promoção (antes de terminar)",
+                "operationId": "921c240335efdc0a7bbadb48bb81d238",
+                "parameters": [
+                    {
+                        "name": "post",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "promotion",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdatePromotionRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Promoção actualizada"
+                    },
+                    "404": {
+                        "description": "Não encontrada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/posts/{post}/promotions/{promotion}/cancel": {
+            "post": {
+                "tags": [
+                    "Gestor",
+                    "Promoções"
+                ],
+                "summary": "Cancelar promoção",
+                "operationId": "a0ca5d2454d7ab84438093d94ac199ab",
+                "parameters": [
+                    {
+                        "name": "post",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "promotion",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Promoção cancelada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/posts/{post}/stock-alerts": {
+            "get": {
+                "tags": [
+                    "Gestor",
+                    "Stock"
+                ],
+                "summary": "Alertas preditivos de rutura (RN-G-004)",
+                "description": "Lista alertas activos/reconhecidos. Parâmetro `status` opcional. Use POST analyze para forçar análise imediata.",
+                "operationId": "cdcd855068de30c19196e9902742d0f5",
+                "parameters": [
+                    {
+                        "name": "post",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "active",
+                                "acknowledged",
+                                "resolved"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Alertas"
+                    },
+                    "403": {
+                        "description": "Sem permissão"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/posts/{post}/stock-alerts/analyze": {
+            "post": {
+                "tags": [
+                    "Gestor",
+                    "Stock"
+                ],
+                "summary": "Executar análise preditiva agora",
+                "operationId": "e03877df0b6346e034b68910ad20b5cf",
+                "parameters": [
+                    {
+                        "name": "post",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Análise concluída"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/posts/{post}/stock-alerts/{alert}/acknowledge": {
+            "patch": {
+                "tags": [
+                    "Gestor",
+                    "Stock"
+                ],
+                "summary": "Reconhecer alerta de rutura",
+                "operationId": "a2e6dad1486fff0617d27fe07df2e4ef",
+                "parameters": [
+                    {
+                        "name": "post",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "alert",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Alerta reconhecido"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/me": {
             "get": {
                 "tags": [
@@ -855,6 +2009,95 @@
                 },
                 "type": "object"
             },
+            "UpdateGestorOperationalRequest": {
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "example": "aberto",
+                        "enum": [
+                            "aberto",
+                            "fechado",
+                            "manutencao"
+                        ]
+                    },
+                    "hours_24": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "services": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "name": {
+                                    "type": "string",
+                                    "example": "Lavagem"
+                                },
+                                "active": {
+                                    "type": "boolean",
+                                    "example": false
+                                },
+                                "motivo_desativacao": {
+                                    "type": "string",
+                                    "example": "bomba avariada"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "combustiveis": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "slug": {
+                                    "type": "string",
+                                    "example": "gasoleo"
+                                },
+                                "disponibilidade": {
+                                    "type": "string",
+                                    "enum": [
+                                        "em_stock",
+                                        "fora_stock"
+                                    ]
+                                },
+                                "motivo_fora_stock": {
+                                    "type": "string",
+                                    "example": "rutura de stock"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "GestorOperationalResponse": {
+                "properties": {
+                    "post_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "nome": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "aberto"
+                    },
+                    "hours24": {
+                        "type": "boolean"
+                    },
+                    "services": {
+                        "type": "object"
+                    },
+                    "combustiveis": {
+                        "type": "array",
+                        "items": {
+                            "type": "object"
+                        }
+                    }
+                },
+                "type": "object"
+            },
             "PostoPublic": {
                 "properties": {
                     "id": {
@@ -902,6 +2145,26 @@
                         "type": "string",
                         "example": "Gasolina",
                         "nullable": true
+                    },
+                    "combustiveis": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "tipo": {
+                                    "type": "string",
+                                    "example": "gasolina"
+                                },
+                                "nome": {
+                                    "type": "string",
+                                    "example": "Gasolina"
+                                },
+                                "disponibilidade": {
+                                    "type": "string",
+                                    "example": "em_stock"
+                                }
+                            },
+                            "type": "object"
+                        }
                     },
                     "status": {
                         "type": "string",
@@ -1266,6 +2529,389 @@
                     }
                 },
                 "type": "object"
+            },
+            "PublishPriceDecreeRequest": {
+                "required": [
+                    "preco"
+                ],
+                "properties": {
+                    "reference": {
+                        "type": "string",
+                        "example": "ANPG/IRDP Março 2026"
+                    },
+                    "fuel_type_id": {
+                        "description": "1=Gasolina, 2=Gasóleo, etc.",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "preco": {
+                        "type": "string",
+                        "example": "320 Kz/L"
+                    },
+                    "preco_premium": {
+                        "type": "string",
+                        "example": "340 Kz/L"
+                    },
+                    "effective_from": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "confirmation_deadline_hours": {
+                        "type": "integer",
+                        "example": 48
+                    }
+                },
+                "type": "object"
+            },
+            "ConfirmPriceDecreeRequest": {
+                "properties": {
+                    "motivo_atraso": {
+                        "description": "Obrigatório se a confirmação for após confirmation_deadline",
+                        "type": "string",
+                        "example": "falha de internet"
+                    }
+                },
+                "type": "object"
+            },
+            "StoreIncidentRequest": {
+                "required": [
+                    "category",
+                    "equipment_type",
+                    "description"
+                ],
+                "properties": {
+                    "category": {
+                        "type": "string",
+                        "example": "urgente",
+                        "enum": [
+                            "urgente",
+                            "normal"
+                        ]
+                    },
+                    "equipment_type": {
+                        "type": "string",
+                        "example": "bomba",
+                        "enum": [
+                            "bomba",
+                            "servico",
+                            "energia",
+                            "ev_charger",
+                            "outro"
+                        ]
+                    },
+                    "service_id": {
+                        "description": "Obrigatório se equipment_type=servico",
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "fuel_type_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "title": {
+                        "type": "string",
+                        "example": "Bomba 2 avariada",
+                        "nullable": true
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Bomba de gasolina parou de responder durante abastecimento."
+                    },
+                    "photos": {
+                        "description": "Até 5 imagens (jpg, png, webp)",
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "binary"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "UpdateIncidentStatusRequest": {
+                "required": [
+                    "status"
+                ],
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "aberto",
+                            "em_andamento",
+                            "resolvido",
+                            "cancelado"
+                        ]
+                    },
+                    "admin_notes": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "StorePromotionRequest": {
+                "required": [
+                    "title",
+                    "discount_percent",
+                    "starts_at",
+                    "ends_at"
+                ],
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "example": "Lavagem -20%",
+                        "maxLength": 120
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "discount_percent": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 15
+                    },
+                    "service_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "product_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "starts_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "ends_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "StoreCampaignRequest": {
+                "required": [
+                    "title",
+                    "starts_at",
+                    "ends_at"
+                ],
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "example": "Super7 - fim de semana"
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "discount_percent": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 20
+                    },
+                    "budget_amount": {
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "radius_meters": {
+                        "type": "integer",
+                        "example": 500
+                    },
+                    "service_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "product_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "starts_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "ends_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "draft",
+                            "scheduled"
+                        ]
+                    }
+                },
+                "type": "object"
+            },
+            "UpdateCampaignRequest": {
+                "properties": {
+                    "title": {
+                        "type": "string"
+                    },
+                    "discount_percent": {
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "budget_amount": {
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "radius_meters": {
+                        "type": "integer"
+                    },
+                    "starts_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "ends_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "CampaignFeedbackRequest": {
+                "required": [
+                    "feedback_qualitativo"
+                ],
+                "properties": {
+                    "feedback_qualitativo": {
+                        "type": "string",
+                        "example": "Promoção gerou muitas vendas na loja."
+                    }
+                },
+                "type": "object"
+            },
+            "TrackCampaignInteractionRequest": {
+                "required": [
+                    "event_type",
+                    "latitude",
+                    "longitude"
+                ],
+                "properties": {
+                    "event_type": {
+                        "type": "string",
+                        "enum": [
+                            "view",
+                            "click",
+                            "conversion"
+                        ]
+                    },
+                    "latitude": {
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "longitude": {
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "client_user_id": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "OfflineSyncBatchRequest": {
+                "required": [
+                    "operations"
+                ],
+                "properties": {
+                    "device_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "client_batch_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "operations": {
+                        "type": "array",
+                        "items": {
+                            "required": [
+                                "id",
+                                "type",
+                                "payload",
+                                "client_timestamp"
+                            ],
+                            "properties": {
+                                "id": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                },
+                                "type": {
+                                    "type": "string",
+                                    "example": "stock.update"
+                                },
+                                "payload": {
+                                    "type": "object"
+                                },
+                                "client_timestamp": {
+                                    "type": "string",
+                                    "format": "date-time"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "UpdatePromotionRequest": {
+                "properties": {
+                    "title": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "discount_percent": {
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "starts_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "ends_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "IncidentResponse": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "post_id": {
+                        "type": "integer"
+                    },
+                    "category": {
+                        "type": "string"
+                    },
+                    "equipment_type": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "photos": {
+                        "type": "array",
+                        "items": {
+                            "type": "object"
+                        }
+                    }
+                },
+                "type": "object"
             }
         },
         "securitySchemes": {
@@ -1305,6 +2951,34 @@
         {
             "name": "Postos Públicos",
             "description": "B2C sem autenticação: listagem (`/postos`), pesquisa (`/postos/search?q=`)"
+        },
+        {
+            "name": "Gestor",
+            "description": "Gestão operacional do posto: status, serviços, combustíveis (RN-G-004.1, RN-G-005)"
+        },
+        {
+            "name": "Preços",
+            "description": "RN-G-001: preços decretados (admin publica, gestor confirma)"
+        },
+        {
+            "name": "Incidentes",
+            "description": "RN-G-006: reporte de incidentes e manutenção (gestor reporta, admin resolve)"
+        },
+        {
+            "name": "Promoções",
+            "description": "RN-G-002: promoções locais (serviços/produtos não-combustível)"
+        },
+        {
+            "name": "Campanhas",
+            "description": "RN-G-007 / RN-G-007.1: campanhas geolocalizadas e métricas"
+        },
+        {
+            "name": "Campanhas Públicas",
+            "description": "B2C: campanhas próximas e tracking de interacções"
+        },
+        {
+            "name": "Offline",
+            "description": "RN-G-008: sincronização em lote após modo offline"
         }
     ]
 }

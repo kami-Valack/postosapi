@@ -36,6 +36,34 @@ DESC,
     name: 'Postos Públicos',
     description: 'B2C sem autenticação: listagem (`/postos`), pesquisa (`/postos/search?q=`)'
 )]
+#[OA\Tag(
+    name: 'Gestor',
+    description: 'Gestão operacional do posto: status, serviços, combustíveis (RN-G-004.1, RN-G-005)'
+)]
+#[OA\Tag(
+    name: 'Preços',
+    description: 'RN-G-001: preços decretados (admin publica, gestor confirma)'
+)]
+#[OA\Tag(
+    name: 'Incidentes',
+    description: 'RN-G-006: reporte de incidentes e manutenção (gestor reporta, admin resolve)'
+)]
+#[OA\Tag(
+    name: 'Promoções',
+    description: 'RN-G-002: promoções locais (serviços/produtos não-combustível)'
+)]
+#[OA\Tag(
+    name: 'Campanhas',
+    description: 'RN-G-007 / RN-G-007.1: campanhas geolocalizadas e métricas'
+)]
+#[OA\Tag(
+    name: 'Campanhas Públicas',
+    description: 'B2C: campanhas próximas e tracking de interacções'
+)]
+#[OA\Tag(
+    name: 'Offline',
+    description: 'RN-G-008: sincronização em lote após modo offline'
+)]
 class OpenApiSpec
 {
 }

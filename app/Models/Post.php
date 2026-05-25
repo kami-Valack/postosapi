@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Post extends Model
 {
@@ -35,7 +36,29 @@ class Post extends Model
 
     public function services(): BelongsToMany
     {
-        return $this->belongsToMany(Service::class, 'post_service');
+        return $this->belongsToMany(Service::class, 'post_service')
+            ->withPivot(['is_active', 'motivo_desativacao'])
+            ->withTimestamps();
+    }
+
+    public function fuelAvailabilities(): HasMany
+    {
+        return $this->hasMany(PostFuelAvailability::class);
+    }
+
+    public function stocks(): HasMany
+    {
+        return $this->hasMany(Stock::class);
+    }
+
+    public function promotions(): HasMany
+    {
+        return $this->hasMany(PostPromotion::class);
+    }
+
+    public function campaigns(): HasMany
+    {
+        return $this->hasMany(PostCampaign::class);
     }
 
     /**
@@ -43,15 +66,19 @@ class Post extends Model
      */
     public function syncServiceNames(array $serviceNames): void
     {
-        $ids = collect($serviceNames)
+        $sync = collect($serviceNames)
             ->map(fn (string $name) => trim($name))
             ->filter()
             ->unique()
-            ->map(fn (string $name) => Service::query()->firstOrCreate(['name' => $name])->id)
-            ->values()
+            ->mapWithKeys(fn (string $name) => [
+                Service::query()->firstOrCreate(['name' => $name])->id => [
+                    'is_active' => true,
+                    'motivo_desativacao' => null,
+                ],
+            ])
             ->all();
 
-        $this->services()->sync($ids);
+        $this->services()->sync($sync);
     }
 
     public function scopePublicActive($query)
@@ -59,9 +86,6 @@ class Post extends Model
         return $query->where('is_active', true);
     }
 
-    /**
-     * Pesquisa textual em nome, morada e tipo de combustível (postos activos).
-     */
     public function scopeSearchTerm($query, string $term)
     {
         $like = '%'.addcslashes($term, '%_\\').'%';
@@ -74,8 +98,6 @@ class Post extends Model
     }
 
     /**
-     * Colunas necessárias para a resposta pública (menos dados = mais rápido).
-     *
      * @return list<string>
      */
     public static function publicListColumns(): array
